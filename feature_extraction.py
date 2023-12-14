@@ -23,7 +23,6 @@ def cal_gradient(img):
 
     return gx, gy, mag, theta
 
-
 # Histogram of Oriented Gradient
 # input: the graident degree of image
 def HOG(grad_deg, block=[2,2], stride = 12, bins=9):
@@ -61,7 +60,7 @@ def HOG(grad_deg, block=[2,2], stride = 12, bins=9):
 def CannyEdge(img,lower_th=0.3, higher_th=0.8):
 
     # apply Gaussian fliter
-    img = cv2.GaussianBlur(img, ksize=(5,5), sigmaX=0.8, sigmaY=0.8)
+    img_gas = cv2.GaussianBlur(img, ksize=(5,5), sigmaX=0.8, sigmaY=0.8)
 
     # apply Sobel operator
     sobel_kernel_x = np.array([[-1,0,+1],
@@ -72,8 +71,8 @@ def CannyEdge(img,lower_th=0.3, higher_th=0.8):
                                [ 0, 0, 0],
                                [-1,-2,-1]])
     
-    Gx = cv2.filter2D(img, -1, sobel_kernel_x)
-    Gy = cv2.filter2D(img, -1, sobel_kernel_y)
+    Gx = cv2.filter2D(img_gas, -1, sobel_kernel_x)
+    Gy = cv2.filter2D(img_gas, -1, sobel_kernel_y)
 
     theta = np.arctan2(Gy, Gx)/np.pi*180.0
     mag = np.sqrt(Gx**2+Gy**2)
@@ -131,24 +130,105 @@ def CannyEdge(img,lower_th=0.3, higher_th=0.8):
             if mask[col, row] ==2:
                 mask[col, row] = 1
 
-    img = img*mask
+
+    return img*mask
+                    
+# Harris corner
+def HarrisPts(img, windowsize=[3,3], k=0.06):
+    
+    # apply Sobel operator
+    sobel_kernel_x = np.array([[-1,0,+1],
+                               [-2,0,+2],
+                               [-1,0,+1]])
+    
+    sobel_kernel_y = np.array([[+1,+2,+1],
+                               [ 0, 0, 0],
+                               [-1,-2,-1]])
+    
+    Gx = cv2.filter2D(img, -1, sobel_kernel_x)
+    Gy = cv2.filter2D(img, -1, sobel_kernel_y)
+
+    Gxx = Gx**2 # A
+    Gyy = Gy**2 # B
+    Gxy = Gx*Gy # C
+
+    # initial weight for window
+    windowKernel = np.ones((windowsize[0],windowsize[1]))
+    # generate gaussian kernel
+    windowKernel = np.zeros((windowsize[0],windowsize[1]))
+    sig = 0.5
+    for x in range(windowsize[0]):
+        for y in range(windowsize[1]):
+            kx = x-1
+            ky = y-1
+            windowKernel[x,y] = (1/2*sig**2*np.pi) * np.exp(-((kx**2 + ky**2)/2*sig*22))
+
+    windowKernel = windowKernel / np.sum(windowKernel)
+
+    print(windowKernel)
+
+    # mask marks corner pts
+    mask = np.zeros(np.shape(img))
+
+    # iterate each pixel in image
+    cols, rows = np.shape(img)
+    offX = windowsize[0]//2
+    offY = windowsize[1]//2
+    for col in range(offX, cols - offX):
+        for row in range(offY, rows - offY):
+            A,B,C = 0,0,0
+            for wx in range(windowsize[0]):
+                for wy in range(windowsize[1]):
+                    A += windowKernel[wx,wy]* (Gx[col+wx-offX, row+wy-offY]**2)
+                    B += windowKernel[wx,wy]* (Gy[col+wx-offX, row+wy-offY]**2)
+                    C += windowKernel[wx,wy]* (Gx[col+wx-offX, row+wy-offY]*Gy[col+wx-offX, row+wy-offY]) # C is unused ???
+            
+            # cal R value
+            det_M = A*B - (C**2)
+            trace_M = A+B
+            R = det_M - k*(trace_M**2)
+
+            if R > 100000 :
+                img[col,row] = 255
+                mask[col,row] = 1
+    print("Harris pts num:",np.sum(mask))
+    return img
+    
+# Fast corner
+def FastPts(img, consective_pts = 9, th = 50):
+
+    circle_kernel = np.array([
+              [0,-4],[+1,-4],[+3,-3],[+4,-2],
+              [+4,0],[+4,+1],[+3,+3],[+2,+4],
+              [0,+4],[-1,+4],[-3,+3],[-4,+2],
+              [-4,0],[-4,-1],[-3,-3],[-2,-4],
+              ])
+    
+    cols, rows = np.shape(img)
+    mask = np.zeros(np.shape(img))
+    for col in range(4, cols-4):
+        for row in range(4, rows-4):
+            acc = 0
+            Ip = img[col, row]
+            LT = Ip - th
+            HT = Ip + th
+
+            # check 16 pts around the pixel
+            for [offX,offY] in circle_kernel:
+                Ip2x = img[col+offX, row+offY]
+                
+                if Ip2x > LT and Ip2x < HT:
+                    break
+                else:
+                    acc = acc+1
+                    if acc >= consective_pts:
+                        break
+            if acc >= consective_pts:
+                img[col, row] = 255
+                mask[col, row] = 1
+    
+    print("Fast points:", np.sum(mask))
 
     return img
-                    
-# Corner detection
-
-
-
-    
-
-
             
-
-
-
-
-
-
-
-
-
+                
