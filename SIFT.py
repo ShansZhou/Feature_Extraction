@@ -3,7 +3,7 @@ import cv2
 
 
 
-
+# TODO: draw descriptors on image, recover markers on source image.
 
 # generate DoG pyramid
 # return: dictionary of octaves containing layers of DoG
