@@ -37,6 +37,14 @@ img_fastPts = np.copy(img)
 img_fastPts = fe.FastPts(img_fastPts, consective_pts=9, th=20)
 cv2.imshow("Fast", img_fastPts)
 
+# SIFT detection
+# img_sift = np.copy(img)
+# fe.SIFT(img)
+
+# HoughLines
+img_HoughLines = np.copy(img)
+img_HoughLines = fe.HoughLine(img_HoughLines)
+cv2.imshow("HoughLines", img_HoughLines)
 
 
 cv2.waitKey(0)

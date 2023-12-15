@@ -276,17 +276,18 @@ def showFeatPts(descriptors, src_img,sig=0.5, k=1):
 
 ##############################################################
 #### Test part ####
-img = cv2.imread("./data/leno.jpg", cv2.IMREAD_GRAYSCALE)
-img = cv2.resize(img, dsize = None, fx=0.3, fy=0.3)
+    
+# img = cv2.imread("./data/leno.jpg", cv2.IMREAD_GRAYSCALE)
+# img = cv2.resize(img, dsize = None, fx=0.3, fy=0.3)
 
-# generate DoG pyramid
-src_img = np.copy(img)
-octave_set = GaussianPyramid(src_img, octaves=9, layers=6, sig=0.5, k=1)
-# locating feature points (extrema)
-extrema_mat = LocateExtrema(octave_set, src_img, sig=0.5, k=1)
-# assgin direction to feature points
-feat_pts = AssignDirection(extrema_mat, src_img, sig=0.5, k=1, bins=10)
-# generate descrptors
-descriptors = GenDescriptors(feat_pts, src_img, sig=0.5, k=1)
-# show feature points
-showFeatPts(descriptors, src_img, sig=0.5, k=1)
+# # generate DoG pyramid
+# src_img = np.copy(img)
+# octave_set = GaussianPyramid(src_img, octaves=9, layers=6, sig=0.5, k=1)
+# # locating feature points (extrema)
+# extrema_mat = LocateExtrema(octave_set, src_img, sig=0.5, k=1)
+# # assgin direction to feature points
+# feat_pts = AssignDirection(extrema_mat, src_img, sig=0.5, k=1, bins=10)
+# # generate descrptors
+# descriptors = GenDescriptors(feat_pts, src_img, sig=0.5, k=1)
+# # show feature points
+# showFeatPts(descriptors, src_img, sig=0.5, k=1)

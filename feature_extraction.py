@@ -1,6 +1,6 @@
 import numpy as np
 import cv2
-
+import SIFT
 
 
 # calculate gradient
@@ -232,3 +232,60 @@ def FastPts(img, consective_pts = 9, th = 50):
     return img
 
 # SIFT points
+def runSIFT(img):
+    # generate DoG pyramid
+    src_img = np.copy(img)
+    octave_set = SIFT.GaussianPyramid(src_img, octaves=9, layers=6, sig=0.5, k=1)
+    # locating feature points (extrema)
+    extrema_mat = SIFT.LocateExtrema(octave_set, src_img, sig=0.5, k=1)
+    # assgin direction to feature points
+    feat_pts = SIFT.AssignDirection(extrema_mat, src_img, sig=0.5, k=1, bins=10)
+    # generate descrptors
+    descriptors = SIFT.GenDescriptors(feat_pts, src_img, sig=0.5, k=1)
+    # show feature points
+    SIFT.showFeatPts(descriptors, src_img, sig=0.5, k=1)
+
+
+# Hough Transform
+def HoughLine(img, k=50):
+
+    src_img = np.copy(img)
+
+    img_edge = cv2.Canny(src_img, 250, 253)
+    # cv2.imshow("testcanny", img_edge)
+    # cv2.waitKey(0)
+
+    cols, rows = np.shape(img_edge)
+    theta = 180
+    maxLine = np.uint16(np.sqrt(cols**2+rows**2))
+    # hough_mat = np.zeros((theta, maxLine))
+    hough_dict = {}
+    for col in range(cols):
+        for row in range(rows):
+            if img_edge[col, row] ==0: continue
+
+            for t in range(theta):
+                rad = t/180*np.pi
+                p = np.int16(col*np.cos(rad) + row*np.sin(rad)) # p probablely could be negative
+                
+                if hough_dict.get((t,p)) == None:
+                    hough_dict[(t,p)] =1
+                else:
+                    hough_dict[(t,p)] +=1
+
+    for (t, p), val in hough_dict.items():
+        if val < k : continue
+        for col in range(cols):
+            rad = t/180*np.pi
+
+            if np.sin(rad) == 0: continue
+
+            row = np.uint16((p - col*np.cos(rad)) / np.sin(rad))
+
+            if row>0 and row< rows and img_edge[col,row]!=0:
+                src_img[col, row] = 255
+
+
+    return src_img
+                
+
