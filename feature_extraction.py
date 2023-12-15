@@ -230,5 +230,5 @@ def FastPts(img, consective_pts = 9, th = 50):
     print("Fast points:", np.sum(mask))
 
     return img
-            
-                
+
+# SIFT points
