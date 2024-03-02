@@ -28,7 +28,7 @@ img_cannyedge = fe.CannyEdge(img_cannyedge,0.3,0.8)
 img_cv_cd = cv2.Canny(img,0.3*255,0.8*255)
 cv2.imshow("Canny Edge",img_cannyedge)
 cv2.imshow("Canny Edge opencv", img_cv_cd)
-cv2.waitKey(0)
+# cv2.waitKey(0)
 
 # Harris points detection
 img_harrisPts = np.copy(img)
