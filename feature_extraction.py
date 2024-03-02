@@ -60,78 +60,61 @@ def HOG(grad_deg, block=[2,2], stride = 12, bins=9):
 def CannyEdge(img,lower_th=0.3, higher_th=0.8):
 
     # apply Gaussian fliter
-    img_gas = cv2.GaussianBlur(img, ksize=(5,5), sigmaX=0.8, sigmaY=0.8)
+    img_gas = cv2.GaussianBlur(img/255.0, ksize=(3,3), sigmaX=0.5, sigmaY=0.5)
 
     # apply Sobel operator
-    sobel_kernel_x = np.array([[-1,0,+1],
-                               [-2,0,+2],
-                               [-1,0,+1]])
-    
-    sobel_kernel_y = np.array([[+1,+2,+1],
-                               [ 0, 0, 0],
-                               [-1,-2,-1]])
-    
-    Gx = cv2.filter2D(img_gas, -1, sobel_kernel_x)
-    Gy = cv2.filter2D(img_gas, -1, sobel_kernel_y)
+    Gx = cv2.Sobel(img_gas, -1, 1,0)
+    Gy = cv2.Sobel(img_gas, -1, 0,1)
 
-    theta = np.arctan2(Gy, Gx)/np.pi*180.0
+    theta = np.arctan2(Gy, Gx)
     mag = np.sqrt(Gx**2+Gy**2)
     
     # 8 direction of bins
-    direct = np.array([[-1,-1],[1,-1],[+1,-1],[+1,0],[+1,+1],[0,+1],[-1,+1],[-1,0]]) 
-    
+    direct = np.array([[-1,-1],[0,-1],[+1,-1],[+1,0],[+1,+1],[0,+1],[-1,+1],[-1,0]]) 
     # iterate all theta in the image
-    cols, rows = np.shape(theta)
-
-    for col in range(1,cols-1):
-        for row in range(1,rows-1):
-            deg = theta[col, row]
-            deg_mod = np.mod(np.int16(deg+360), 360)
-            degInSeg = deg_mod//45
-
-            # Non maximun suppression
-            offsetX1 = direct[degInSeg][0]
-            offsetY1 = direct[degInSeg][1]
-
-            offsetX2 = direct[np.mod(degInSeg+4,8)][0]
-            offsetY2 = direct[np.mod(degInSeg+4,8)][1]
-
-            deg1 = theta[col+offsetX1, row+offsetY1]
-            deg2 = theta[col+offsetX2, row+offsetY2]
-
-            if mag[col,row] >= mag[col+offsetX1,row+offsetY1] and mag[col,row] >= mag[col+offsetX2, row+offsetY2]:
+    rows, cols= np.shape(img_gas)
+    # Non maximun suppression - [Grident Mag]
+    for row in range(1,rows-1):
+        for col in range(1,cols-1):
+            deg = theta[row,col]*180/np.pi
+            
+            offX1, offY1, offX2, offY2 = 0,0,0,0
+            if  (-22.5<deg<=22.5) or (-180<=deg<=-157.5) or (157.5<deg<=180):
+                offX1, offY1, offX2, offY2 = 0,1,0,-1
+            elif (22.5<deg<=67.5) or (-157.5<deg<=-112.5):
+                offX1, offY1, offX2, offY2 = 1,1,-1,-1
+            elif (67.5<deg<=112.5) or (-112.5<deg<=-67.5):
+                offX1, offY1, offX2, offY2 = 1,0,-1,0
+            elif (112.5<deg<=157.5) or (-67.5<deg<=-22.5):
+                offX1, offY1, offX2, offY2 = +1,-1,-1,+1
+  
+            if mag[row,col] >= mag[row+offY1,col+offX1] and mag[row,col] >= mag[row+offY2,col+offX2]:
                 pass
             else:
-                img[col,row] = 0
+                mag[row,col]=0.0
 
+    mask = np.ones(img_gas.shape,np.uint8)
     # Fuzzy threshold
-    mask = np.ones((cols, rows), np.uint8)
-
-    img_32f = np.float32(img)/255.0
-    mask[img_32f<lower_th] = 0
-    mask[img_32f>higher_th] = 2
-
     Neigbs8 = direct
-
-    for col in range(1, cols - 1):
-        for row in range(1, rows - 1):
-            if mask[col, row] ==1:
-                isRemained = False
+    for row in range(1, rows - 1):
+        for col in range(1, cols - 1):
+            
+            if mag[row, col] < lower_th:
+                mask[row, col] = 0
+            elif mag[row, col] > higher_th:
+                mask[row, col] = 255
+            else:
                 for [x_off, y_off] in Neigbs8:
-                    if mask[col+x_off, row+y_off] ==1:
-                        isRemained = True
+                    
+                    if row+y_off<0 or row+y_off>=rows or col+x_off<0 or col+x_off>=cols:continue
+                    
+                    if mag[row+y_off, col+x_off] > higher_th:
+                        mask[row, col] = 255
                         break
+                    else:
+                        mask[row, col] = 0
 
-                if isRemained:
-                    mask[col, row] = 1
-                else:
-                    mask[col, row] = 0
-
-            if mask[col, row] ==2:
-                mask[col, row] = 1
-
-
-    return img*mask
+    return mask
                     
 # Harris corner
 def HarrisPts(img, windowsize=[3,3], k=0.06):
