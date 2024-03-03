@@ -25,20 +25,26 @@ print("block: ",np.shape(blocks)[0])
 # Canny edge dection
 img_cannyedge = np.copy(img)
 img_cannyedge = fe.CannyEdge(img_cannyedge,0.3,0.8)
-img_cv_cd = cv2.Canny(img,0.3*255,0.8*255)
-cv2.imshow("Canny Edge",img_cannyedge)
-cv2.imshow("Canny Edge opencv", img_cv_cd)
+# img_cv_cd = cv2.Canny(img,0.3*255,0.8*255)
+# cv2.imshow("Canny Edge",img_cannyedge)
+# cv2.imshow("Canny Edge opencv", img_cv_cd)
 # cv2.waitKey(0)
 
-# Harris points detection
+# Harris points detection: Return R for each point
 img_harrisPts = np.copy(img)
-img_harrisPts = fe.HarrisPts(img_harrisPts, windowsize=[3,3], k=0.06)
+harrisR = fe.HarrisPts(img_harrisPts, kernel_gas=3, kernel_sobel=3, k=0.04)
+img_harrisPts[harrisR>0.01*harrisR.max()] = 255
 cv2.imshow("Harris", img_harrisPts)
+
+# im_cv2harris = np.copy(img)
+# im_cv2harrisPts = cv2.cornerHarris(im_cv2harris,3,3,0.04)
+# im_cv2harris[im_cv2harrisPts>0.01*im_cv2harrisPts.max()] = 255
+# cv2.imshow("Harris CV2", im_cv2harris)
 
 # Fast points detection
 img_fastPts = np.copy(img)
 img_fastPts = fe.FastPts(img_fastPts, consective_pts=9, th=20)
-cv2.imshow("Fast", img_fastPts)
+# cv2.imshow("Fast", img_fastPts)
 
 # SIFT detection
 # img_sift = np.copy(img)
@@ -47,7 +53,7 @@ cv2.imshow("Fast", img_fastPts)
 # HoughLines
 img_HoughLines = np.copy(img)
 img_HoughLines = fe.HoughLine(img_HoughLines)
-cv2.imshow("HoughLines", img_HoughLines)
+# cv2.imshow("HoughLines", img_HoughLines)
 
 
 cv2.waitKey(0)

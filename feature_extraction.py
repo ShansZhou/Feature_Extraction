@@ -117,65 +117,28 @@ def CannyEdge(img,lower_th=0.3, higher_th=0.8):
     return mask
                     
 # Harris corner
-def HarrisPts(img, windowsize=[3,3], k=0.06):
+def HarrisPts(img, kernel_gas=3, kernel_sobel=3, k=0.06):
+    
+    img_norm = np.float32(img)/255.0
     
     # apply Sobel operator
-    sobel_kernel_x = np.array([[-1,0,+1],
-                               [-2,0,+2],
-                               [-1,0,+1]])
-    
-    sobel_kernel_y = np.array([[+1,+2,+1],
-                               [ 0, 0, 0],
-                               [-1,-2,-1]])
-    
-    Gx = cv2.filter2D(img, -1, sobel_kernel_x)
-    Gy = cv2.filter2D(img, -1, sobel_kernel_y)
+    Gx = cv2.Sobel(img_norm, -1, 1, 0, kernel_sobel)
+    Gy = cv2.Sobel(img_norm, -1, 0, 1, kernel_sobel)
 
     Gxx = Gx**2 # A
     Gyy = Gy**2 # B
     Gxy = Gx*Gy # C
 
-    # initial weight for window
-    windowKernel = np.ones((windowsize[0],windowsize[1]))
-    # generate gaussian kernel
-    windowKernel = np.zeros((windowsize[0],windowsize[1]))
-    sig = 0.5
-    for x in range(windowsize[0]):
-        for y in range(windowsize[1]):
-            kx = x-1
-            ky = y-1
-            windowKernel[x,y] = (1/2*sig**2*np.pi) * np.exp(-((kx**2 + ky**2)/2*sig*22))
+    sig = 1.3 # correspond to cv2
+    A = cv2.GaussianBlur(Gxx,(kernel_gas,kernel_gas),sig)
+    B = cv2.GaussianBlur(Gyy,(kernel_gas,kernel_gas),sig)
+    C = cv2.GaussianBlur(Gxy,(kernel_gas,kernel_gas),sig)
 
-    windowKernel = windowKernel / np.sum(windowKernel)
+    det_M = A*B - (C**2)
+    trace_M = A+B
+    R = det_M - k*(trace_M**2)
 
-    print(windowKernel)
-
-    # mask marks corner pts
-    mask = np.zeros(np.shape(img))
-
-    # iterate each pixel in image
-    cols, rows = np.shape(img)
-    offX = windowsize[0]//2
-    offY = windowsize[1]//2
-    for col in range(offX, cols - offX):
-        for row in range(offY, rows - offY):
-            A,B,C = 0,0,0
-            for wx in range(windowsize[0]):
-                for wy in range(windowsize[1]):
-                    A += windowKernel[wx,wy]* (Gx[col+wx-offX, row+wy-offY]**2)
-                    B += windowKernel[wx,wy]* (Gy[col+wx-offX, row+wy-offY]**2)
-                    C += windowKernel[wx,wy]* (Gx[col+wx-offX, row+wy-offY]*Gy[col+wx-offX, row+wy-offY]) # C is unused ???
-            
-            # cal R value
-            det_M = A*B - (C**2)
-            trace_M = A+B
-            R = det_M - k*(trace_M**2)
-
-            if R > 100000 :
-                img[col,row] = 255
-                mask[col,row] = 1
-    print("Harris pts num:",np.sum(mask))
-    return img
+    return R
     
 # Fast corner
 def FastPts(img, consective_pts = 9, th = 50):
