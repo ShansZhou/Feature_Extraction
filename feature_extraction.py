@@ -150,18 +150,18 @@ def FastPts(img, consective_pts = 9, th = 50):
               [-4,0],[-4,-1],[-3,-3],[-2,-4],
               ])
     
-    cols, rows = np.shape(img)
+    rows,cols = np.shape(img)
     mask = np.zeros(np.shape(img))
-    for col in range(4, cols-4):
-        for row in range(4, rows-4):
+    for row in range(4, rows-4):
+        for col in range(4, cols-4):
             acc = 0
-            Ip = img[col, row]
+            Ip = img[row, col]
             LT = Ip - th
             HT = Ip + th
 
             # check 16 pts connectivities around the pixel
             for [offX,offY] in circle_kernel:
-                Ip2x = img[col+offX, row+offY]
+                Ip2x = img[row+offY, col+offX]
                 
                 if Ip2x > LT and Ip2x < HT: # the pixel is similar to center, then it is not corner
                     break
@@ -170,8 +170,8 @@ def FastPts(img, consective_pts = 9, th = 50):
                     if acc >= consective_pts: # surfficient consective points 
                         break
             if acc >= consective_pts:
-                img[col, row] = 255
-                mask[col, row] = 1
+                img[row, col] = 255
+                mask[row, col] = 1
     
     print("Fast points:", np.sum(mask))
 
