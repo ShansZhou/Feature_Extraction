@@ -43,8 +43,13 @@ cv2.imshow("Harris", img_harrisPts)
 
 # Fast points detection
 img_fastPts = np.copy(img)
-img_fastPts = fe.FastPts(img_fastPts, consective_pts=9, th=20)
-# cv2.imshow("Fast", img_fastPts)
+img_fastPts = fe.FastPts(img_fastPts, consective_pts=9, th=50)
+cv2.imshow("Fast", img_fastPts)
+
+# im_cv2fast = np.copy(img)
+# im_cv2fastpts = cv2.FastFeatureDetector().create(threshold=50).detect(im_cv2fast)
+# im_cv2fast = cv2.drawKeypoints(im_cv2fast, im_cv2fastpts,None,(0,255,0))
+# cv2.imshow("FAST cv2", im_cv2fast)
 
 # SIFT detection
 # img_sift = np.copy(img)

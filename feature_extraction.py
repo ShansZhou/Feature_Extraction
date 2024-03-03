@@ -159,15 +159,15 @@ def FastPts(img, consective_pts = 9, th = 50):
             LT = Ip - th
             HT = Ip + th
 
-            # check 16 pts around the pixel
+            # check 16 pts connectivities around the pixel
             for [offX,offY] in circle_kernel:
                 Ip2x = img[col+offX, row+offY]
                 
-                if Ip2x > LT and Ip2x < HT:
+                if Ip2x > LT and Ip2x < HT: # the pixel is similar to center, then it is not corner
                     break
                 else:
                     acc = acc+1
-                    if acc >= consective_pts:
+                    if acc >= consective_pts: # surfficient consective points 
                         break
             if acc >= consective_pts:
                 img[col, row] = 255
