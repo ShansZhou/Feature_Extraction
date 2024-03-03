@@ -193,7 +193,7 @@ def runSIFT(img):
 
 
 # Hough Transform
-def HoughLine(img, k=50):
+def HoughLine(img, k=100):
 
     src_img = np.copy(img)
 
@@ -201,14 +201,14 @@ def HoughLine(img, k=50):
     # cv2.imshow("testcanny", img_edge)
     # cv2.waitKey(0)
 
-    cols, rows = np.shape(img_edge)
+    rows, cols = np.shape(img_edge)
     theta = 180
-    maxLine = np.uint16(np.sqrt(cols**2+rows**2))
+    maxLine = np.uint16(np.sqrt(rows**2+cols**2))
     # hough_mat = np.zeros((theta, maxLine))
-    hough_dict = {}
-    for col in range(cols):
-        for row in range(rows):
-            if img_edge[col, row] ==0: continue
+    hough_dict = {} # store lines params
+    for row in range(rows):
+        for col in range(cols):
+            if img_edge[row,col] ==0: continue
 
             for t in range(theta):
                 rad = t/180*np.pi
@@ -219,19 +219,37 @@ def HoughLine(img, k=50):
                 else:
                     hough_dict[(t,p)] +=1
 
+    # iterate each line(val>k), find locations in image
+    lines = []
     for (t, p), val in hough_dict.items():
         if val < k : continue
+        
+        # find all possible pixel locations along the line
+        maxX = 0
+        minX = maxLine
+        pt_max = [0,0]
+        pt_min = [0,0]
         for col in range(cols):
             rad = t/180*np.pi
 
             if np.sin(rad) == 0: continue
 
+            # known col, compute row wrt P equation
             row = np.uint16((p - col*np.cos(rad)) / np.sin(rad))
 
-            if row>0 and row< rows and img_edge[col,row]!=0:
-                src_img[col, row] = 255
+            if 0<=row<rows and img_edge[row,col]!=0:
+                src_img[row, col] = 255
+                
+                if maxX < row:
+                    maxX = row
+                    pt_max = [col,row]
+                if minX > row:
+                    minX = row    
+                    pt_min = [col,row]
+        
+        lines.append([pt_max,pt_min])
 
 
-    return src_img
+    return src_img, lines
                 
 

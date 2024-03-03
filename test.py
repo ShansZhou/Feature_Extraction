@@ -56,9 +56,14 @@ cv2.imshow("Fast", img_fastPts)
 # fe.SIFT(img)
 
 # HoughLines
+img = cv2.imread("data/test.jpg", cv2.IMREAD_GRAYSCALE)
 img_HoughLines = np.copy(img)
-img_HoughLines = fe.HoughLine(img_HoughLines)
-# cv2.imshow("HoughLines", img_HoughLines)
+img_HoughLines, lines = fe.HoughLine(img_HoughLines)
+img_color = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+for l in lines:
+    img_hl = cv2.line(img_color, l[0], l[1],[0,255,0],1)
+cv2.imshow("HoughLines", img_hl)
+
 
 
 cv2.waitKey(0)
